@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: docker.io/postgres:15.19
+        ports:
+        - containerPort: 5432
+          name: db
+        env:
+        - name: POSTGRES_DB
+          value: "accounts"
+        - name: POSTGRES_PASSWORD
+          value: "accounts-pw"
+        volumeMounts:
+          - name: init-sql-vol
+            mountPath: /docker-entrypoint-initdb.d
+          - mountPath: /var/lib/postgresql
+            name: pvc-postgresql
+      volumes:
+        - name: init-sql-vol
+          configMap:
+            name: accounts-db-init
+            items:
+              - key: init.sql
+                path: init.sql
+        - name: pvc-postgresql
+          persistentVolumeClaim:
+            claimName: pvc-postgresql
